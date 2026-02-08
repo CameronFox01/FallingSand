@@ -43,18 +43,22 @@ public class SandDisplay {
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.PAGE_AXIS));
 
         JPanel topPanel = new JPanel();
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
+        topPanel.setLayout(new BorderLayout()); // Changed from BoxLayout
         frame.getContentPane().add(topPanel);
 
         display = new JPanel() {
-
+            @Override
             public void paintComponent(Graphics g) {
-                g.drawImage(image, 0, 0, null);
+                super.paintComponent(g);
+                // Scale image to fit current panel size
+                g.drawImage(image, 0, 0, getWidth(), getHeight(), null);
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(numCols * cellSize, numRows * cellSize);
             }
         };
-
-        display.setPreferredSize(new Dimension(numCols * cellSize, numRows * cellSize));
-
         MouseAdapter mouseHandler = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -73,11 +77,11 @@ public class SandDisplay {
         };
         display.addMouseListener(mouseHandler);
         display.addMouseMotionListener(mouseHandler);
-        topPanel.add(display);
+        topPanel.add(display, BorderLayout.CENTER); // Changed to CENTER
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.PAGE_AXIS));
-        topPanel.add(buttonPanel);
+        topPanel.add(buttonPanel, BorderLayout.EAST); // Changed to EAST
 
         buttons = new JRadioButton[toolNames.length];
         ButtonGroup buttonGroup = new ButtonGroup();
@@ -157,8 +161,13 @@ public class SandDisplay {
      * @return Array of (row, col)
      */
     private int[] toLocation(MouseEvent e) {
-        int row = e.getY() / cellSize;
-        int col = e.getX() / cellSize;
+        // Calculate scaling factors
+        double scaleX = (double) display.getWidth() / (numCols * cellSize);
+        double scaleY = (double) display.getHeight() / (numRows * cellSize);
+
+        int row = (int) (e.getY() / scaleY / cellSize);
+        int col = (int) (e.getX() / scaleX / cellSize);
+
         if (row < 0 || row >= numRows || col < 0 || col >= numCols) {
             return null;
         }
